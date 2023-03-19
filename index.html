@@ -1,0 +1,49 @@
+<html>
+
+<head>
+    <!-- CSS -->
+    <link rel="stylesheet" href="index.css">
+    <!-- Font Awesome CDN -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
+        integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;600&display=swap" rel="stylesheet">
+</head>
+
+<body>
+    <header>
+        <h1>Tweeter</h1>
+        <button class="settings change-btn">Change User</button>
+    </header>
+    <main>
+        <div class="tweet-input-area">
+            <img src="images/mogwai.jpg" class="profile-pic">
+            <textarea placeholder="What's happening?" id="tweet-input"></textarea>
+        </div>
+        <button id="tweet-btn">Tweet</button>
+        <div class="feed" id="feed">
+            <!-- Tweets here!! -->
+        </div>
+        <button class="clear-data">Clear Data</button>
+    </main>
+
+
+
+    <div class="modal" id="modal">
+        <p class="modal-close">X</p>
+        <h2 class="modal-message">Enter handle and image<i class="fa-solid fa-turn-down down"></i></h2>
+        <form id="change-user">
+            <label for="handle">Handle: </label>
+            <input type="text" name="handle" placeholder="Enter your handle (starting with @)" required />
+            <label for="image-url">Profile Pic Url:</label>
+            <input type="text" name="image-url" placeholder="Enter a valid url for your profile image" required />
+            <button type="submit">Start Tweeting!</button>
+        </form>
+    </div>
+    <script src="index.js" type="module"></script>
+</body>
+
+</html>
