@@ -1,7 +1,7 @@
-import { td } from './data.js'
+import { initialData } from './data.js'
 import { v4 as uuidv4 } from 'https://jspm.dev/uuid';
 //Global Variables
-let tweetsData = td
+let tweetsData = initialData
 let USERNAME = '@Mogwai';
 let imageUrl = 'images/mogwai.jpg';
 let isReplying = false;
@@ -9,10 +9,7 @@ let isReplying = false;
 
 
 //Local Storage Functionality
-if (!localStorage.length) {
-    saveToLocalStorage()
 
-}
 function saveToLocalStorage() {
     localStorage.setItem('tweetsData', JSON.stringify(tweetsData))
     localStorage.setItem('imageUrl', imageUrl)
@@ -26,76 +23,6 @@ function readFromLocalStorage() {
         USERNAME = localStorage.getItem('USERNAME')
     }
 }
-readFromLocalStorage();
-document.querySelector('.profile-pic').src = imageUrl
-render()
-
-
-
-// Click Event Listener handler, pull in other listeners 
-//and extract logic into functions
-document.addEventListener('click', function (e) {
-    if (e.target.dataset.like) {
-        handleLikeClick(e.target.dataset.like)
-    }
-    else if (e.target.dataset.retweet) {
-        handleRetweetClick(e.target.dataset.retweet)
-    }
-    else if (e.target.dataset.reply) {
-        showReplies(e.target.dataset.reply)
-    }
-    else if (e.target.dataset.makeReply) {
-        if (!isReplying) {
-            makeReplyTo(e.target.dataset.makeReply)
-            isReplying = !isReplying
-        }
-    }
-    else if (e.target.dataset.delete) {
-        deleteTweet(e.target.dataset.delete)
-    }
-    else if (e.target.id === 'tweet-btn') {
-        handleTweetBtnClick()
-    }
-    else if (e.target.id === 'reply-btn') {
-        handleReplyBtnClick(e.target.dataset.replyBtn)
-        isReplying = false
-
-    }
-})
-
-
-//change user functionality
-
-//change user button brings up modal MOVE to event listeners area
-document.querySelector('.change-btn').addEventListener('click', () => {
-    document.querySelector('.modal').style.display = 'inline'
-})
-
-//change user submit form and logic
-const changeUser = document.querySelector('#change-user')
-changeUser.addEventListener('submit', (event) => {
-    event.preventDefault()
-    const changeUserFormData = new FormData(changeUser)
-    USERNAME = changeUserFormData.get('handle')
-    try {
-        imageUrl = changeUserFormData.get('image-url')
-        document.querySelector('.profile-pic').src = imageUrl
-    } catch (error) {
-        console.log(error)
-    }
-    saveToLocalStorage()
-    document.querySelector('.modal').style.display = 'none'
-})
-//close out modal
-document.querySelector('.modal-close').addEventListener('click', () => {
-    document.querySelector('.modal').style.display = 'none'
-})
-
-//clear data
-document.querySelector('.clear-data').addEventListener('click', () => {
-    localStorage.clear()
-    location.reload()
-})
 
 //Functions
 
@@ -187,89 +114,92 @@ function handleReplyBtnClick(tweetId) {
     }
 }
 
+function canDelete(tweet) {
+    if (tweet.handle === USERNAME) {
+        return `<span class="tweet-detail">
+        <i class="fa-solid fa-trash"
+        data-delete="${tweet.uuid}"
+        ></i>
+    </span>`
+    }
+    else {
+        return ''
+    }
+}
+
+function replyHtml(reply) {
+    return `
+    <div class="tweet-reply">
+        <div class="tweet-inner">
+            <img src="${reply.profilePic}" class="profile-pic">
+                <div>
+                    <p class="handle">${reply.handle}</p>
+                    <p class="tweet-text">${reply.tweetText}</p>
+                </div>
+            </div>
+    </div>
+    `
+}
+
+function tweetHtml(tweet, deleteable, repliesHtml) {
+    return `
+    <div class="tweet">
+        <div class="tweet-inner">
+            <img src="${tweet.profilePic}" class="profile-pic">
+            <div>
+                <p class="handle">${tweet.handle}</p>
+                <p class="tweet-text">${tweet.tweetText}</p>
+                <div class="tweet-details">
+                    <span class="tweet-detail">
+                        <i class="fa-regular fa-comment-dots"
+                        data-reply="${tweet.uuid}"
+                        ></i>
+                        ${tweet.replies.length}
+                    </span>
+                    <span class="tweet-detail">
+                        <i class="fa-solid fa-heart ${(tweet.isLiked ? 'liked' : '')}"
+                        data-like="${tweet.uuid}"
+                        ></i>
+                        ${tweet.likes}
+                    </span>
+                    <span class="tweet-detail">
+                        <i class="fa-solid fa-retweet ${(tweet.isRetweeted ? 'retweeted' : '')}"
+                        data-retweet="${tweet.uuid}"
+                        ></i>
+                        ${tweet.retweets}
+                    </span>
+                    <span class="tweet-detail">
+                        <i class="fa-solid fa-reply"
+                        data-make-reply="${tweet.uuid}"
+                        ></i>
+                    </span>
+                    ${deleteable}
+                </div>   
+            </div>            
+        </div>
+        <div class="hidden" id="replies-${tweet.uuid}">
+            ${repliesHtml}
+        </div>   
+    </div>
+    `
+}
+
+
+
 function getFeedHtml() {
     let feedHtml = ``
 
     tweetsData.forEach(function (tweet) {
-        let deleteable = ''
-        if (tweet.handle === USERNAME) {
-            deleteable = `<span class="tweet-detail">
-            <i class="fa-solid fa-trash"
-            data-delete="${tweet.uuid}"
-            ></i>
-        </span>`
-        }
-        let likeIconClass = ''
-
-        if (tweet.isLiked) {
-            likeIconClass = 'liked'
-        }
-
-        let retweetIconClass = ''
-
-        if (tweet.isRetweeted) {
-            retweetIconClass = 'retweeted'
-        }
+        let deleteable = canDelete(tweet)
 
         let repliesHtml = ''
-
         if (tweet.replies.length > 0) {
-            tweet.replies.forEach(function (reply) {
-                repliesHtml += `
-<div class="tweet-reply">
-    <div class="tweet-inner">
-        <img src="${reply.profilePic}" class="profile-pic">
-            <div>
-                <p class="handle">${reply.handle}</p>
-                <p class="tweet-text">${reply.tweetText}</p>
-            </div>
-        </div>
-</div>
-`
+            tweet.replies.forEach((reply) => {
+                repliesHtml += replyHtml(reply)
             })
         }
 
-
-        feedHtml += `
-<div class="tweet">
-    <div class="tweet-inner">
-        <img src="${tweet.profilePic}" class="profile-pic">
-        <div>
-            <p class="handle">${tweet.handle}</p>
-            <p class="tweet-text">${tweet.tweetText}</p>
-            <div class="tweet-details">
-                <span class="tweet-detail">
-                    <i class="fa-regular fa-comment-dots"
-                    data-reply="${tweet.uuid}"
-                    ></i>
-                    ${tweet.replies.length}
-                </span>
-                <span class="tweet-detail">
-                    <i class="fa-solid fa-heart ${likeIconClass}"
-                    data-like="${tweet.uuid}"
-                    ></i>
-                    ${tweet.likes}
-                </span>
-                <span class="tweet-detail">
-                    <i class="fa-solid fa-retweet ${retweetIconClass}"
-                    data-retweet="${tweet.uuid}"
-                    ></i>
-                    ${tweet.retweets}
-                </span>
-                <span class="tweet-detail">
-                    <i class="fa-solid fa-reply"
-                    data-make-reply="${tweet.uuid}"
-                    ></i>
-                </span>
-                ${deleteable}
-            </div>   
-        </div>            
-    </div>
-    <div class="hidden" id="replies-${tweet.uuid}">
-        ${repliesHtml}
-    </div>   
-</div>
-`
+        feedHtml += tweetHtml(tweet, deleteable, repliesHtml)
     })
     return feedHtml
 }
@@ -281,3 +211,87 @@ function render() {
 
 
 
+function init() {
+
+
+    //If nothing in localStorage, put initial data in
+    if (!localStorage.length) {
+        saveToLocalStorage()
+    }
+    //readcontents of localStorage regardless
+    readFromLocalStorage();
+
+    //update imageUrl if necessary
+    document.querySelector('.profile-pic').src = imageUrl
+    render()
+
+
+
+    // Click Event Listener handler, pull in other listeners 
+    //and extract logic into functions
+    document.addEventListener('click', function (e) {
+        if (e.target.dataset.like) {
+            handleLikeClick(e.target.dataset.like)
+        }
+        else if (e.target.dataset.retweet) {
+            handleRetweetClick(e.target.dataset.retweet)
+        }
+        else if (e.target.dataset.reply) {
+            showReplies(e.target.dataset.reply)
+        }
+        else if (e.target.dataset.makeReply) {
+            if (!isReplying) {
+                makeReplyTo(e.target.dataset.makeReply)
+                isReplying = !isReplying
+            }
+        }
+        else if (e.target.dataset.delete) {
+            deleteTweet(e.target.dataset.delete)
+        }
+        else if (e.target.id === 'tweet-btn') {
+            handleTweetBtnClick()
+        }
+        else if (e.target.id === 'reply-btn') {
+            handleReplyBtnClick(e.target.dataset.replyBtn)
+            isReplying = false
+
+        }
+    })
+
+
+    //change user functionality
+
+    //change user button brings up modal
+    document.querySelector('.change-btn').addEventListener('click', () => {
+        document.querySelector('.modal').style.display = 'inline'
+    })
+
+    //change user submit form and logic
+    const changeUser = document.querySelector('#change-user')
+    changeUser.addEventListener('submit', (event) => {
+        event.preventDefault()
+        const changeUserFormData = new FormData(changeUser)
+        USERNAME = changeUserFormData.get('handle')
+        try {
+            imageUrl = changeUserFormData.get('image-url')
+            document.querySelector('.profile-pic').src = imageUrl
+        } catch (error) {
+            console.log(error)
+        }
+        saveToLocalStorage()
+        document.querySelector('.modal').style.display = 'none'
+    })
+
+    //close out change user modal
+    document.querySelector('.modal-close').addEventListener('click', () => {
+        document.querySelector('.modal').style.display = 'none'
+    })
+
+    //clear data
+    document.querySelector('.clear-data').addEventListener('click', () => {
+        localStorage.clear()
+        location.reload()
+    })
+
+}
+init();

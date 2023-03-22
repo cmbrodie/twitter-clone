@@ -1,4 +1,4 @@
-export let td = [
+export let initialData = [
     {
         handle: `@TrollBot66756542 💎`,
         profilePic: `images/troll.jpg`,
