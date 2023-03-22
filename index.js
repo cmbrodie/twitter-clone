@@ -227,8 +227,7 @@ function init() {
 
 
 
-    // Click Event Listener handler, pull in other listeners 
-    //and extract logic into functions
+    // Click Event Listener handler
     document.addEventListener('click', function (e) {
         if (e.target.dataset.like) {
             handleLikeClick(e.target.dataset.like)
