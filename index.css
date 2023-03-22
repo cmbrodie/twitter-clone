@@ -34,7 +34,7 @@ i {
 
 main,
 header {
-    width: 290px;
+    max-width: 290px;
     margin: 0 auto;
 }
 

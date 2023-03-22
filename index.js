@@ -1,56 +1,18 @@
-
-`
-Set a key-value pair in localStorage:
-localStorage.setItem('key', 'value');
-
-Get the value associated with a key from localStorage:
-const value = localStorage.getItem('key');
-
-Remove a key-value pair from localStorage:
-localStorage.removeItem('key');
-
-Clear all data stored in localStorage:
-localStorage.clear();
-`
+import { td } from './data.js'
+import { v4 as uuidv4 } from 'https://jspm.dev/uuid';
+//Global Variables
+let tweetsData = td
 let USERNAME = '@Mogwai';
 let imageUrl = 'images/mogwai.jpg';
 let isReplying = false;
-const changeUser = document.querySelector('#change-user')
-changeUser.addEventListener('submit', (event) => {
-    event.preventDefault()
-    const changeUserFormData = new FormData(changeUser)
-    USERNAME = changeUserFormData.get('handle')
-    try {
-        imageUrl = changeUserFormData.get('image-url')
-        document.querySelector('.profile-pic').src = imageUrl
-    } catch (error) {
-        console.log(error)
-    }
-    saveToLocalStorage()
-    document.querySelector('.modal').style.display = 'none'
-})
 
 
-document.querySelector('.clear-data').addEventListener('click', () => {
-    localStorage.clear()
-    location.reload()
-})
-document.querySelector('.change-btn').addEventListener('click', () => {
-    document.querySelector('.modal').style.display = 'inline'
-})
-document.querySelector('.modal-close').addEventListener('click', () => {
-    document.querySelector('.modal').style.display = 'none'
-})
 
-import { td } from './data.js'
-import { v4 as uuidv4 } from 'https://jspm.dev/uuid';
-let tweetsData = td
+//Local Storage Functionality
 if (!localStorage.length) {
     saveToLocalStorage()
 
 }
-
-
 function saveToLocalStorage() {
     localStorage.setItem('tweetsData', JSON.stringify(tweetsData))
     localStorage.setItem('imageUrl', imageUrl)
@@ -68,9 +30,10 @@ readFromLocalStorage();
 document.querySelector('.profile-pic').src = imageUrl
 render()
 
-console.log('tweetsData = ', tweetsData)
 
 
+// Click Event Listener handler, pull in other listeners 
+//and extract logic into functions
 document.addEventListener('click', function (e) {
     if (e.target.dataset.like) {
         handleLikeClick(e.target.dataset.like)
@@ -82,9 +45,6 @@ document.addEventListener('click', function (e) {
         showReplies(e.target.dataset.reply)
     }
     else if (e.target.dataset.makeReply) {
-        console.log('trying to reply..')
-        console.log(isReplying)
-        console.log(e.target.dataset.makeReply)
         if (!isReplying) {
             makeReplyTo(e.target.dataset.makeReply)
             isReplying = !isReplying
@@ -102,45 +62,75 @@ document.addEventListener('click', function (e) {
 
     }
 })
+
+
+//change user functionality
+
+//change user button brings up modal MOVE to event listeners area
+document.querySelector('.change-btn').addEventListener('click', () => {
+    document.querySelector('.modal').style.display = 'inline'
+})
+
+//change user submit form and logic
+const changeUser = document.querySelector('#change-user')
+changeUser.addEventListener('submit', (event) => {
+    event.preventDefault()
+    const changeUserFormData = new FormData(changeUser)
+    USERNAME = changeUserFormData.get('handle')
+    try {
+        imageUrl = changeUserFormData.get('image-url')
+        document.querySelector('.profile-pic').src = imageUrl
+    } catch (error) {
+        console.log(error)
+    }
+    saveToLocalStorage()
+    document.querySelector('.modal').style.display = 'none'
+})
+//close out modal
+document.querySelector('.modal-close').addEventListener('click', () => {
+    document.querySelector('.modal').style.display = 'none'
+})
+
+//clear data
+document.querySelector('.clear-data').addEventListener('click', () => {
+    localStorage.clear()
+    location.reload()
+})
+
+//Functions
+
 function deleteTweet(tweetId) {
     let tweetIndex = tweetsData.map(tweet => tweet.uuid).indexOf(tweetId)
     tweetsData.splice(tweetIndex, 1)
     render()
     saveToLocalStorage()
-    console.log(tweetId)
-    console.log(tweetsData)
 
 }
-function handleLikeClick(tweetId) {
-    const targetTweetObj = tweetsData.filter(function (tweet) {
+function getTargetTweet(tweetId) {
+    return tweetsData.filter((tweet) => {
         return tweet.uuid === tweetId
     })[0]
+}
 
-    if (targetTweetObj.isLiked) {
-        targetTweetObj.likes--
+function updateEngagement(count, flag, tweetId) {
+    const targetTweet = getTargetTweet(tweetId)
+    if (targetTweet[flag]) {
+        targetTweet[count]--
     }
     else {
-        targetTweetObj.likes++
+        targetTweet[count]++
     }
-    targetTweetObj.isLiked = !targetTweetObj.isLiked
+    targetTweet[flag] = !targetTweet[flag]
     render()
     saveToLocalStorage()
+}
+
+function handleLikeClick(tweetId) {
+    updateEngagement('likes', 'isLiked', tweetId)
 }
 
 function handleRetweetClick(tweetId) {
-    const targetTweetObj = tweetsData.filter(function (tweet) {
-        return tweet.uuid === tweetId
-    })[0]
-
-    if (targetTweetObj.isRetweeted) {
-        targetTweetObj.retweets--
-    }
-    else {
-        targetTweetObj.retweets++
-    }
-    targetTweetObj.isRetweeted = !targetTweetObj.isRetweeted
-    render()
-    saveToLocalStorage()
+    updateEngagement('retweets', 'isRetweeted', tweetId)
 }
 
 function showReplies(replyId) {
@@ -182,12 +172,9 @@ function handleTweetBtnClick() {
 
 function handleReplyBtnClick(tweetId) {
     const replyInput = document.getElementById('reply-input')
-    const targetTweet = tweetsData.filter((tweet) => {
-        return tweet.uuid === tweetId
-    })[0]
+    const targetTweet = getTargetTweet(tweetId)
+
     if (replyInput.value) {
-        console.log(replyInput.value)
-        console.log(tweetId)
         let newReply = {
             handle: USERNAME,
             profilePic: imageUrl,
